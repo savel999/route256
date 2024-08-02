@@ -12,7 +12,7 @@ import (
 	"time"
 )
 
-const outBinaryName = "app_test"
+const outBinaryName = "__app_test"
 const goPath = "/usr/lib/go-1.22/bin/go"
 
 type TaskTest struct {
