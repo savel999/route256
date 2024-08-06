@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+</head>
+<body class="body">
+<div class="form">
+    <h1>Входные данные</h1>
+    <div class="input-wrapper"><textarea id="input"></textarea></div>
+    <h1>Ответы</h1>
+    <div class="input-wrapper"><textarea id="input_result"></textarea></div>
+    <button onclick="draw()">Нарисовать</button>
+</div>
+<div class="out_grids"></div>
+</body>
+</html>
+
+<style>
+    .body {
+        padding: 20px;
+    }
+    .input-wrapper{
+        margin-bottom: 20px;
+    }
+    .input-wrapper> textarea{
+        width: 100%;
+        height: 100px;
+    }
+
+    .out_grids{margin-top: 20px;}
+    .out_grid{margin-bottom: 20px;}
+    .grid_title{font-size: 20px;font-weight: 600;}
+    .grid_body td{width: 30px;height: 30px;border: 1px solid #dfdfdf;text-align: center;vertical-align: middle;}
+
+    .point{
+        width: 10px;
+        height: 10px;
+        /*background: red;*/
+        border-radius: 10px;
+        display: inline-block;
+        border: 1px solid #dfdfdf;
+        font-size: 7px;
+        line-height: 10px;
+    }
+
+</style>
+
+<script>
+    function getRandomColor() {
+        var letters = '0123456789ABCDEF';
+        var color = '#';
+        for (var i = 0; i < 6; i++) {
+            color += letters[Math.floor(Math.random() * 16)];
+        }
+        return color;
+    }
+
+    function draw() {
+        clearGrids();
+        const grids = parseGrids();
+        const results = parseResults();
+
+
+        for (let index in grids) {
+            drawGrid(grids[index],parseInt(index)+1,results[index]);
+        }
+    }
+
+
+    function parseResults(){
+        let result = [];
+        let lines =  document.getElementById("input_result").value.split('\n');
+
+        for (let i = 0; i < lines.length; i++) {
+            result.push(parseInt(lines[i].trim()));
+        }
+
+        return result;
+    }
+
+    function parseGrids(){
+        let grids = [];
+        let lines =  document.getElementById("input").value.split('\n');
+        let cnt = parseInt(lines[0].trim());
+        let rowIndex = 1;
+
+        for (let i = 0; i < cnt; i++) {
+            const sizes =  lines[rowIndex].trim().split(' ');
+            rowIndex++;
+            const resourcesCnt =  parseInt(lines[rowIndex].trim());
+            rowIndex++;
+
+            const parsedGrid = {
+                rows: parseInt(sizes[0].trim()),
+                cols: parseInt(sizes[1].trim()),
+                resiurcesCount: resourcesCnt,
+                points: {}
+            }
+
+            // парсинг ресурса
+            for (let j = 0; j < resourcesCnt; j++) {
+                const resourceColor = getRandomColor();
+                const pointsCnt =  parseInt(lines[rowIndex].trim());
+                rowIndex++;
+
+                // парсинг ресурса
+                for (let k = 0; k < pointsCnt; k++) {
+                    const pointCoords =  lines[rowIndex].trim().split(' ');
+                    rowIndex++;
+
+                    const pointX = parseInt(pointCoords[0].trim());
+                    const pointY = parseInt(pointCoords[1].trim());
+                    const pointKey = `${pointX}_${pointY}`;
+
+
+                    if (!Array.isArray(parsedGrid["points"][pointKey])) {
+                        parsedGrid["points"][pointKey] = [];
+                    }
+
+                    parsedGrid["points"][pointKey].push({color:resourceColor,num:(j+1)});
+
+                }
+            }
+
+            grids.push(parsedGrid);
+
+        }
+
+        return grids;
+    }
+
+    function drawGrid(grid, index, result){
+        let gridRows = '';
+        let resultStr = parseInt(result) > 0 ? result : "-";
+
+        for (let i = 0; i < grid.rows; i++) {
+            let gridCells = "";
+
+            for (let j = 0; j < grid.cols; j++) {
+                let cellPoints = "";
+                const row = String(i+1);
+                const cell = String(j+1);
+
+                const cellPointsList = grid.points[`${row}_${cell}`];
+
+
+                if (Array.isArray(cellPointsList)) {
+                    for (const cellPoint of cellPointsList) {
+                        cellPoints += `<div class="point" style="background-color:${cellPoint.color}">${cellPoint.num}</div>`;
+                    }
+                }
+
+
+
+                gridCells += `<td>${cellPoints}</td>`;
+            }
+
+            gridRows+= `<tr>${gridCells}</tr>`
+        }
+
+
+
+        let gridHtml = `
+             <div class="out_grid">
+                <div class="grid_title">Входные данные ${index}: (${grid.rows}x${grid.cols} [${grid.resiurcesCount}]) Ответ: ${resultStr}</div>
+                <div class="grid_body"><table>${gridRows}</table></div>
+             </div>
+        `;
+
+        let outGrid = document.getElementsByClassName("out_grids")[0];
+        outGrid.innerHTML += gridHtml;
+    }
+
+    function clearGrids() {
+        document.getElementsByClassName("out_grids")[0].innerHTML = "";
+    }
+
+    document.getElementById("input").value = getDefaultText();
+    document.getElementById("input_result").value = getDefaultResultText();
+
+    function getDefaultText() {
+        return `2
+2 3
+2
+2
+1 3
+2 2
+2
+2 3
+2 1
+3 3
+3
+1
+3 1
+2
+1 2
+1 3
+2
+3 1
+2 3`
+    }
+
+
+    function getDefaultResultText() {
+        return `2
+6`
+    }
+</script>
