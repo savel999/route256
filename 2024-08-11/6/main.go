@@ -34,20 +34,6 @@ func main() {
 func getMirrors(numbers []int) int {
 	result := 0
 
-	for i := 1; i < len(numbers)-2; i++ {
-		for j := i + 1; j < len(numbers)-1; j++ {
-			if numbers[i]+numbers[j] == numbers[i-1]+numbers[j+1] {
-				result++
-			}
-		}
-	}
-
-	return result
-}
-
-func getMirrorsV2(numbers []int) int {
-	result := 0
-
 	mapDiffsIndexes := make(map[int][]int)
 
 	for j := 1; j < len(numbers)-2; j++ {
