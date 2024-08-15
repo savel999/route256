@@ -8,16 +8,19 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"sort"
+	"strconv"
 	"strings"
 	"time"
 )
 
 const outBinaryName = "__app_test"
-const goPath = "/usr/lib/go-1.22/bin/go"
+const goPath = "/snap/go/10679/bin/go"
 
 type TaskTest struct {
 	TestStdinPath  string
 	TestResultPath string
+	TestNumber     int
 }
 
 func main() {
@@ -47,9 +50,9 @@ func main() {
 
 	log.Printf("Необходимо выполнить тестов: %d шт.\n", len(tests))
 
-	for _, test := range tests {
-		log.Printf("Запуск теста: %s.", test.TestStdinPath)
+	var totalExecutionTime int64 = 0
 
+	for _, test := range tests {
 		commandText := fmt.Sprintf(
 			"%s/%s < %s > %s.res",
 			taskDir, outBinaryName, test.TestStdinPath, test.TestStdinPath,
@@ -59,11 +62,9 @@ func main() {
 		execTestCmd.Stdout = os.Stdout
 		execTestCmd.Stderr = os.Stderr
 
-		log.Printf("Текст команды: %s", execTestCmd.String())
-
 		start := time.Now()
 		err = execTestCmd.Run()
-		log.Printf("Время выполнения: %d мс", time.Since(start).Milliseconds())
+		executionDurationInMs := time.Since(start).Milliseconds()
 
 		if err != nil {
 			log.Fatal(fmt.Errorf("execute error: %w", err))
@@ -78,13 +79,18 @@ func main() {
 
 		diffOutput, _ := diffTestCmd.CombinedOutput()
 
-		log.Printf("Дифы тестов: %s\n", string(diffOutput))
+		testStatus := "❌"
 
-		break
+		if len(diffOutput) == 0 {
+			testStatus = "✅"
+		}
+
+		log.Printf("%s  Тест %d: %d мс", testStatus, test.TestNumber, executionDurationInMs)
+
+		totalExecutionTime += executionDurationInMs
 	}
 
-	fmt.Println(tests)
-	fmt.Println(err)
+	log.Printf("Суммарное время выполнения: %d мс", totalExecutionTime)
 }
 
 func parseTests(dir string) ([]TaskTest, error) {
@@ -101,12 +107,23 @@ func parseTests(dir string) ([]TaskTest, error) {
 		}
 
 		if resultTemplatePath.MatchString(file.Name()) {
-			result = append(result, TaskTest{
+			taskTest := TaskTest{
 				TestStdinPath:  filepath.Join(dir, strings.ReplaceAll(file.Name(), ".a", "")),
 				TestResultPath: filepath.Join(dir, file.Name()),
-			})
+			}
+
+			pathParts := strings.Split(taskTest.TestStdinPath, "/")
+			testNumber, _ := strconv.Atoi(pathParts[len(pathParts)-1])
+
+			taskTest.TestNumber = testNumber
+
+			result = append(result, taskTest)
 		}
 	}
+
+	sort.Slice(result, func(i, j int) bool {
+		return result[i].TestNumber < result[j].TestNumber
+	})
 
 	return result, nil
 }
