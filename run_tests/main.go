@@ -15,7 +15,7 @@ import (
 )
 
 const outBinaryName = "__app_test"
-const goPath = "/snap/go/10679/bin/go"
+const goPath = "/home/zhekan/go/pkg/mod/golang.org/toolchain@v0.0.1-go1.23.3.linux-amd64/bin/go"
 
 type TaskTest struct {
 	TestStdinPath  string
