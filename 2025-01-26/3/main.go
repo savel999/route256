@@ -18,10 +18,8 @@ func main() {
 		var wordsCnt int
 		fmt.Fscan(in, &wordsCnt)
 
-		evenParts := make(map[string][]int)
-		oddParts := make(map[string][]int)
-
-		pairsMap := make(map[string]bool)
+		evenParts := make(map[string]int)
+		oddParts := make(map[string]int)
 
 		for j := 0; j < wordsCnt; j++ {
 			var wordBytes []byte
@@ -37,30 +35,28 @@ func main() {
 				}
 			}
 
-			evenPart := string(word.EvenBytes)
-
-			if items, ok := evenParts[evenPart]; ok {
-				for _, item := range items {
-					pairsMap[fmt.Sprintf("%d_%d", item, j)] = true
-				}
-			}
-
-			evenParts[evenPart] = append(evenParts[evenPart], j)
+			evenParts[string(word.EvenBytes)]++
 
 			if len(word.OddBytes) > 0 {
-				oddPart := string(word.OddBytes)
-
-				if items, ok := oddParts[oddPart]; ok {
-					for _, item := range items {
-						pairsMap[fmt.Sprintf("%d_%d", item, j)] = true
-					}
-				}
-
-				oddParts[oddPart] = append(oddParts[oddPart], j)
+				oddParts[string(word.OddBytes)]++
 			}
 		}
 
-		fmt.Fprintf(out, "%d\n", len(pairsMap))
+		maxMatches, result := 0, 0
+
+		for _, v := range evenParts {
+			maxMatches = max(maxMatches, v)
+		}
+
+		for _, v := range oddParts {
+			maxMatches = max(maxMatches, v)
+		}
+
+		for k := maxMatches - 1; k >= 1; k-- {
+			result += k
+		}
+
+		fmt.Fprintf(out, "%d\n", result)
 	}
 }
 
